@@ -15,22 +15,27 @@ COLORS = {
     "YELLOW": "yellow"
 }
 
-NEUTRAL_WORD = "XXXX"
+NEUTRAL_WORDS = ["DOG", "CAR", "TREE", "HOUSE"]
 
 # ---------------- FUNCTIONS ----------------
 def generate_question():
     q_type = random.choice(["congruent", "incongruent", "neutral"])
 
     if q_type == "neutral":
+        word = random.choice(NEUTRAL_WORDS)
         color = random.choice(list(COLORS.values()))
-        return NEUTRAL_WORD, color, "Neutral"
+        return word, color, "Neutral"
 
     word = random.choice(list(COLORS.keys()))
-    color = COLORS[word] if q_type == "congruent" else random.choice(
-        [c for c in COLORS.values() if c != COLORS[word]]
-    )
+    if q_type == "congruent":
+        color = COLORS[word]
+        condition = "Congruent"
+    else:
+        color = random.choice([c for c in COLORS.values() if c != COLORS[word]])
+        condition = "Incongruent"
 
-    return word, color, q_type.capitalize()
+    return word, color, condition
+
 
 def record_response(results, q_no, word, color, condition, answer, correct, rt):
     results.append({
@@ -43,11 +48,16 @@ def record_response(results, q_no, word, color, condition, answer, correct, rt):
         "Reaction Time (s)": rt
     })
 
+
 def next_question():
     st.session_state.q_index += 1
     st.session_state.start_time = time.time()
     st.session_state.answered = False
-    st.session_state.word, st.session_state.color, st.session_state.condition = generate_question()
+    (
+        st.session_state.word,
+        st.session_state.color,
+        st.session_state.condition
+    ) = generate_question()
 
 # ---------------- SESSION STATE ----------------
 if "started" not in st.session_state:
@@ -70,7 +80,7 @@ if not st.session_state.started:
     st.subheader("📋 Instructions")
     st.write("""
 - Select the **COLOR of the text**, not the word.
-- Some words may not represent a color (**neutral trials**).
+- Some words may **not represent colors**.
 - Each question has **15 seconds**.
 - Total questions: **20**
 """)
@@ -80,7 +90,11 @@ if not st.session_state.started:
         st.session_state.q_index = 1
         st.session_state.results = []
         st.session_state.start_time = time.time()
-        st.session_state.word, st.session_state.color, st.session_state.condition = generate_question()
+        (
+            st.session_state.word,
+            st.session_state.color,
+            st.session_state.condition
+        ) = generate_question()
         st.session_state.answered = False
         st.rerun()
 
@@ -92,7 +106,6 @@ if st.session_state.q_index > TOTAL_QUESTIONS:
 
     df = pd.DataFrame(st.session_state.results)
 
-    # -------- METRICS --------
     accuracy = (df["Correct"].sum() / len(df)) * 100
     mean_rt = df["Reaction Time (s)"].dropna().mean()
 
@@ -124,7 +137,6 @@ remaining = max(0, int(TIME_LIMIT - elapsed))
 st_autorefresh(interval=1000, key="timer")
 
 st.write(f"### Question {st.session_state.q_index} / {TOTAL_QUESTIONS}")
-st.info(f"Condition: **{st.session_state.condition}**")
 st.warning(f"⏱ Time left: {remaining} seconds")
 
 # ---------------- DISPLAY ----------------
