@@ -106,19 +106,32 @@ if st.session_state.q_index > TOTAL_QUESTIONS:
 
     df = pd.DataFrame(st.session_state.results)
 
-    accuracy = (df["Correct"].sum() / len(df)) * 100
-    mean_rt = df["Reaction Time (s)"].dropna().mean()
+    # ---------------- ERROR RATE ----------------
+    total_trials = len(df)
+    total_errors = total_trials - df["Correct"].sum()
+    error_rate = (total_errors / total_trials) * 100
 
-    cong_rt = df[df["Condition"] == "Congruent"]["Reaction Time (s)"].mean()
-    incong_rt = df[df["Condition"] == "Incongruent"]["Reaction Time (s)"].mean()
-    stroop_effect = incong_rt - cong_rt
+    # ---------------- MEAN RT (Correct Only) ----------------
+    df_correct = df[df["Correct"] == True]
+    mean_rt = df_correct["Reaction Time (s)"].dropna().mean()
 
+    # ---------------- STROOP INTERFERENCE (Correct Only) ----------------
+    cong_rt = df_correct[df_correct["Condition"] == "Congruent"]["Reaction Time (s)"].mean()
+    incong_rt = df_correct[df_correct["Condition"] == "Incongruent"]["Reaction Time (s)"].mean()
+
+    stroop_effect = None
+    if pd.notna(cong_rt) and pd.notna(incong_rt):
+        stroop_effect = incong_rt - cong_rt
+
+    # ---------------- METRICS DISPLAY ----------------
     st.subheader("📊 Performance Metrics")
     col1, col2, col3 = st.columns(3)
-    col1.metric("Accuracy (%)", f"{accuracy:.2f}")
-    col2.metric("Mean RT (s)", f"{mean_rt:.2f}")
-    col3.metric("Stroop Interference (s)", f"{stroop_effect:.2f}")
 
+    col1.metric("Error Rate (%)", f"{error_rate:.2f}")
+    col2.metric("Mean RT (Correct Only) (s)", f"{mean_rt:.2f}" if pd.notna(mean_rt) else "N/A")
+    col3.metric("Stroop Interference (s)", f"{stroop_effect:.2f}" if stroop_effect is not None else "N/A")
+
+    # ---------------- DETAILED TABLE ----------------
     st.subheader("📋 Detailed Responses")
     st.dataframe(df, use_container_width=True)
 
