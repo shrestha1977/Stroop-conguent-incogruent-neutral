@@ -5,8 +5,8 @@ import pandas as pd
 from streamlit_autorefresh import st_autorefresh
 
 # ---------------- CONFIG ----------------
-TOTAL_QUESTIONS = 20
-TIME_LIMIT = 15
+TOTAL_QUESTIONS = 42
+TIME_LIMIT = 5
 
 COLORS = {
     "RED": "red",
@@ -81,8 +81,8 @@ if not st.session_state.started:
     st.write("""
 - Select the **COLOR of the text**, not the word.
 - Some words may **not represent colors**.
-- Each question has **15 seconds**.
-- Total questions: **20**
+- Each question has **5 seconds**.
+- Total questions: **42**
 """)
 
     if st.button("▶️ Start Test"):
